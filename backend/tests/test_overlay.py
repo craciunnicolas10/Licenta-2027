@@ -79,6 +79,14 @@ def test_snapshot_command_with_calibration(tmp_path):
     assert image[340, 525].any()
 
 
+def test_snapshot_from_an_image(tmp_path):
+    image = tmp_path / "photo.jpg"
+    cv2.imwrite(str(image), BLANK)
+    out = tmp_path / "result" / "photo-out.png"
+    assert main(["snapshot", str(image), "--out", str(out)]) == 0
+    assert cv2.imread(str(out)).shape == (720, 1100, 3)
+
+
 def test_snapshot_past_the_end(tmp_path):
     video = tmp_path / "clip.avi"
     write_video(video, n_frames=3)
