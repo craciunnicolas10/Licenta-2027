@@ -6,7 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "playertrack"
 version = "0.1.0"
 description = "Single-player tracking and performance analytics from football match video"
-readme = "../README.md"
 requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.26",
