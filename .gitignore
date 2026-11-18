@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+
+# Model weights, match videos and analysis outputs (too large for git)
+*.pt
+*.onnx
+*.mp4
+*.avi
+*.mkv
+*.mov
+data/
+outputs/
+runs/
+
+# Editors / OS
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local environment
+.env
