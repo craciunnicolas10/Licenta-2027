@@ -1,0 +1,11 @@
+{
+  "pitch": { "length": 105, "width": 68 },
+  "ransac_threshold_m": 1.0,
+  "points": [
+    { "image": [312, 188], "landmark": "halfway_top" },
+    { "image": [1590, 214], "landmark": "right_penalty_box_top_goal_line" },
+    { "image": [1402, 640], "landmark": "right_penalty_box_bottom_corner" },
+    { "image": [240, 1010], "landmark": "halfway_bottom" },
+    { "image": [903, 512], "pitch": [70.0, 34.0] }
+  ]
+}
