@@ -6,7 +6,7 @@
       "type": "debugpy",
       "request": "launch",
       "module": "playertrack.cli",
-      "args": ["serve", "--port", "8000"],
+      "args": ["serve", "--port", "8000", "--weights", "yolo11n.pt"],
       "cwd": "${workspaceFolder}/backend",
       "justMyCode": true
     },
@@ -19,6 +19,7 @@
         "snapshot", "${input:video}",
         "--frame", "${input:frame}",
         "--detect",
+        "--weights", "yolo11n.pt",
         "--out", "${workspaceFolder}/outputs/players.png"
       ],
       "cwd": "${workspaceFolder}/backend",
@@ -48,6 +49,7 @@
         "--calibration", "${input:calibration}",
         "--click", "${input:clickX}", "${input:clickY}",
         "--click-frame", "${input:frame}",
+        "--weights", "yolo11n.pt",
         "--out", "${workspaceFolder}/outputs/result.json"
       ],
       "cwd": "${workspaceFolder}/backend",
