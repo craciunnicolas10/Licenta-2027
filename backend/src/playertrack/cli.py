@@ -10,7 +10,7 @@ from pathlib import Path
 
 from .homography import PitchHomography, pitch_landmarks
 from .pipeline import AnalysisPipeline, TargetSelection
-from .video import iter_frames, read_video_info
+from .video import is_image, iter_frames, read_image, read_video_info, write_image
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -45,8 +45,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "snapshot",
         help="Save one frame as an image, optionally with detections and calibrated pitch lines",
     )
-    snapshot.add_argument("video", type=Path, help="Match video file")
-    snapshot.add_argument("--frame", type=int, default=0, help="Frame index to save")
+    snapshot.add_argument("video", type=Path, help="Match video file, or a single image")
+    snapshot.add_argument(
+        "--frame", type=int, default=0, help="Frame index to save (ignored for images)"
+    )
     snapshot.add_argument("--out", type=Path, default=Path("frame.png"), help="Output image")
     snapshot.add_argument(
         "--calibration", type=Path, help="Draw the pitch lines this calibration projects"
@@ -78,30 +80,36 @@ def _serve(args: argparse.Namespace) -> int:
 
 
 def _snapshot(args: argparse.Namespace) -> int:
-    import cv2
-
     from .overlay import draw_detections, draw_pitch
 
-    frame = next(
-        (f for _, f in iter_frames(args.video, start=args.frame, end=args.frame + 1)), None
-    )
+    if is_image(args.video):
+        frame = read_image(args.video)
+        source = args.video.name
+    else:
+        frame = next(
+            (f for _, f in iter_frames(args.video, start=args.frame, end=args.frame + 1)), None
+        )
+        source = f"frame {args.frame}"
     if frame is None:
-        print(f"Frame {args.frame} is past the end of the video.", file=sys.stderr)
+        print(f"Could not read {source} from {args.video}", file=sys.stderr)
         return 1
-    if args.calibration:
-        frame = draw_pitch(frame, PitchHomography.from_calibration_file(args.calibration))
-    if args.detect:
+
+    detections = []
+    if args.detect:  # detect on the clean frame, before anything is drawn on it
         from .detection import YoloDetector
 
         detections = YoloDetector(args.weights, device=args.device).detect(frame)
-        frame = draw_detections(frame, detections)
         print(f"{len(detections)} detections", file=sys.stderr)
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    if not cv2.imwrite(str(args.out), frame):
+    if args.calibration:
+        frame = draw_pitch(frame, PitchHomography.from_calibration_file(args.calibration))
+    if detections:
+        frame = draw_detections(frame, detections)
+
+    if not write_image(args.out, frame):
         print(f"Could not write {args.out}", file=sys.stderr)
         return 1
     height, width = frame.shape[:2]
-    print(f"saved frame {args.frame} ({width}x{height}) -> {args.out}", file=sys.stderr)
+    print(f"saved {source} ({width}x{height}) -> {args.out}", file=sys.stderr)
     return 0
 
 

@@ -22,6 +22,33 @@ class VideoInfo:
         return self.frame_count / self.fps if self.fps > 0 else 0.0
 
 
+IMAGE_SUFFIXES = frozenset({".jpg", ".jpeg", ".png", ".bmp", ".webp"})
+
+
+def is_image(path: str | Path) -> bool:
+    return Path(path).suffix.lower() in IMAGE_SUFFIXES
+
+
+def read_image(path: str | Path) -> np.ndarray | None:
+    """Read an image as BGR. Unlike ``cv2.imread`` this also handles non-ASCII paths on Windows."""
+    try:
+        data = np.fromfile(str(path), dtype=np.uint8)
+    except OSError:
+        return None
+    return cv2.imdecode(data, cv2.IMREAD_COLOR) if data.size else None
+
+
+def write_image(path: str | Path, image: np.ndarray) -> bool:
+    """Write an image, creating parent folders; the format follows the file extension."""
+    path = Path(path)
+    ok, encoded = cv2.imencode(path.suffix or ".png", image)
+    if not ok:
+        return False
+    path.parent.mkdir(parents=True, exist_ok=True)
+    encoded.tofile(str(path))
+    return True
+
+
 def _open(path: str | Path) -> cv2.VideoCapture:
     capture = cv2.VideoCapture(str(path))
     if not capture.isOpened():
