@@ -40,7 +40,27 @@ def _build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("--out", type=Path, help="Write the JSON result here instead of stdout")
 
     commands.add_parser("landmarks", help="List the pitch landmark names for calibration files")
+
+    serve = commands.add_parser("serve", help="Start the HTTP API used by the web frontend")
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=8000)
+    serve.add_argument("--weights", default="yolo11m.pt", help="YOLO weights file")
+    serve.add_argument("--stride", type=int, default=1, help="Process every N-th frame")
+    serve.add_argument("--device", default=None, help="Inference device, e.g. cpu or 0")
     return parser
+
+
+def _serve(args: argparse.Namespace) -> int:
+    try:
+        import uvicorn
+
+        from .api.app import create_app, make_default_analyzer
+    except ImportError:
+        print("The API needs the 'api' extra: pip install -e 'backend[api]'", file=sys.stderr)
+        return 1
+    app = create_app(make_default_analyzer(args.weights, args.stride, args.device))
+    uvicorn.run(app, host=args.host, port=args.port)
+    return 0
 
 
 def _analyze(args: argparse.Namespace) -> int:
@@ -86,6 +106,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         for name, (x, y) in pitch_landmarks().items():
             print(f"{name:36s} ({x:6.2f}, {y:6.2f})")
         return 0
+    if args.command == "serve":
+        return _serve(args)
     return _analyze(args)
 
 
