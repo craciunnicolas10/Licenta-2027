@@ -1,4 +1,4 @@
-"""Command-line entry point: ``playertrack analyze`` and ``playertrack landmarks``."""
+"""Command-line entry point: ``playertrack analyze | snapshot | landmarks | serve``."""
 
 from __future__ import annotations
 
@@ -41,6 +41,20 @@ def _build_parser() -> argparse.ArgumentParser:
 
     commands.add_parser("landmarks", help="List the pitch landmark names for calibration files")
 
+    snapshot = commands.add_parser(
+        "snapshot",
+        help="Save one frame as an image, optionally with detections and calibrated pitch lines",
+    )
+    snapshot.add_argument("video", type=Path, help="Match video file")
+    snapshot.add_argument("--frame", type=int, default=0, help="Frame index to save")
+    snapshot.add_argument("--out", type=Path, default=Path("frame.png"), help="Output image")
+    snapshot.add_argument(
+        "--calibration", type=Path, help="Draw the pitch lines this calibration projects"
+    )
+    snapshot.add_argument("--detect", action="store_true", help="Run YOLO and draw the detections")
+    snapshot.add_argument("--weights", default="yolo11m.pt", help="YOLO weights file")
+    snapshot.add_argument("--device", default=None, help="Inference device, e.g. cpu or 0")
+
     serve = commands.add_parser("serve", help="Start the HTTP API used by the web frontend")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8000)
@@ -63,13 +77,41 @@ def _serve(args: argparse.Namespace) -> int:
     return 0
 
 
+def _snapshot(args: argparse.Namespace) -> int:
+    import cv2
+
+    from .overlay import draw_detections, draw_pitch
+
+    frame = next(
+        (f for _, f in iter_frames(args.video, start=args.frame, end=args.frame + 1)), None
+    )
+    if frame is None:
+        print(f"Frame {args.frame} is past the end of the video.", file=sys.stderr)
+        return 1
+    if args.calibration:
+        frame = draw_pitch(frame, PitchHomography.from_calibration_file(args.calibration))
+    if args.detect:
+        from .detection import YoloDetector
+
+        detections = YoloDetector(args.weights, device=args.device).detect(frame)
+        frame = draw_detections(frame, detections)
+        print(f"{len(detections)} detections", file=sys.stderr)
+    if not cv2.imwrite(str(args.out), frame):
+        print(f"Could not write {args.out}", file=sys.stderr)
+        return 1
+    height, width = frame.shape[:2]
+    print(f"saved frame {args.frame} ({width}x{height}) -> {args.out}", file=sys.stderr)
+    return 0
+
+
 def _analyze(args: argparse.Namespace) -> int:
     from .detection import YoloDetector
 
     info = read_video_info(args.video)
     homography = PitchHomography.from_calibration_file(args.calibration)
     pipeline = AnalysisPipeline(YoloDetector(args.weights, device=args.device), homography)
-    total = max(1, info.frame_count // args.stride)
+    remaining = max(0, info.frame_count - args.click_frame)
+    total = max(1, -(-remaining // args.stride))  # ceiling division
 
     def report(done: int) -> None:
         if done % 50 == 0 or done == total:
@@ -108,6 +150,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "serve":
         return _serve(args)
+    if args.command == "snapshot":
+        return _snapshot(args)
     return _analyze(args)
 
 
