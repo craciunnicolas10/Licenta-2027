@@ -52,15 +52,34 @@ pytest
 
 ## Usage
 
-1. Calibrate the pitch: pick at least four pitch landmarks in a frame and write
-   them to a JSON file – see [docs/calibration.md](docs/calibration.md) and
-   [examples/calibration.example.json](examples/calibration.example.json).
-2. Note the pixel position of the player you want to follow.
-3. Run the analysis:
+1. Save a frame and read pixel coordinates from it (any image viewer that shows
+   the cursor position works, e.g. Paint):
 
-```bash
-playertrack analyze match.mp4 --calibration calibration.json --click 812 455 --out result.json
-```
+   ```bash
+   playertrack snapshot match.mp4 --frame 0 --out frame.png
+   ```
+
+2. Calibrate the pitch: pick at least four pitch landmarks in that frame and
+   write them to a JSON file – see [docs/calibration.md](docs/calibration.md) and
+   [examples/calibration.example.json](examples/calibration.example.json).
+   Check it by drawing the projected pitch lines over the frame; they should sit
+   on the real markings:
+
+   ```bash
+   playertrack snapshot match.mp4 --calibration calibration.json --out check.png
+   ```
+
+3. Find the player: `--detect` draws every detection with the point to click on.
+
+   ```bash
+   playertrack snapshot match.mp4 --detect --out players.png
+   ```
+
+4. Run the analysis:
+
+   ```bash
+   playertrack analyze match.mp4 --calibration calibration.json --click 812 455 --out result.json
+   ```
 
 `result.json` contains the movement metrics, a 21 × 14 heatmap, time spent in
 each third, possession summary, the list of passes and the full trajectory.

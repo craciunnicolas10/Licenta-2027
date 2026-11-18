@@ -1,0 +1,78 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "API server (http://127.0.0.1:8000/docs)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "playertrack.cli",
+      "args": ["serve", "--port", "8000"],
+      "cwd": "${workspaceFolder}/backend",
+      "justMyCode": true
+    },
+    {
+      "name": "Snapshot: frame with detections",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "playertrack.cli",
+      "args": [
+        "snapshot", "${input:video}",
+        "--frame", "${input:frame}",
+        "--detect",
+        "--out", "${workspaceFolder}/outputs/players.png"
+      ],
+      "cwd": "${workspaceFolder}/backend",
+      "justMyCode": true
+    },
+    {
+      "name": "Snapshot: check calibration",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "playertrack.cli",
+      "args": [
+        "snapshot", "${input:video}",
+        "--frame", "${input:frame}",
+        "--calibration", "${input:calibration}",
+        "--out", "${workspaceFolder}/outputs/calibration-check.png"
+      ],
+      "cwd": "${workspaceFolder}/backend",
+      "justMyCode": true
+    },
+    {
+      "name": "Analyze a clip",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "playertrack.cli",
+      "args": [
+        "analyze", "${input:video}",
+        "--calibration", "${input:calibration}",
+        "--click", "${input:clickX}", "${input:clickY}",
+        "--click-frame", "${input:frame}",
+        "--out", "${workspaceFolder}/outputs/result.json"
+      ],
+      "cwd": "${workspaceFolder}/backend",
+      "justMyCode": true
+    },
+    {
+      "name": "Tests: current file",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["${file}", "-q"],
+      "cwd": "${workspaceFolder}/backend",
+      "justMyCode": true
+    }
+  ],
+  "inputs": [
+    { "id": "video", "type": "promptString", "description": "Full path to the match video" },
+    { "id": "frame", "type": "promptString", "description": "Frame index", "default": "0" },
+    {
+      "id": "calibration",
+      "type": "promptString",
+      "description": "Calibration JSON file",
+      "default": "${workspaceFolder}/examples/calibration.example.json"
+    },
+    { "id": "clickX", "type": "promptString", "description": "Player X in pixels" },
+    { "id": "clickY", "type": "promptString", "description": "Player Y in pixels" }
+  ]
+}
