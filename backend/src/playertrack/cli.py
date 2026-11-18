@@ -96,6 +96,7 @@ def _snapshot(args: argparse.Namespace) -> int:
         detections = YoloDetector(args.weights, device=args.device).detect(frame)
         frame = draw_detections(frame, detections)
         print(f"{len(detections)} detections", file=sys.stderr)
+    args.out.parent.mkdir(parents=True, exist_ok=True)
     if not cv2.imwrite(str(args.out), frame):
         print(f"Could not write {args.out}", file=sys.stderr)
         return 1
@@ -130,6 +131,7 @@ def _analyze(args: argparse.Namespace) -> int:
 
     payload = json.dumps(result.to_dict(), indent=2)
     if args.out:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(payload, encoding="utf-8")
         movement = result.movement
         print(
