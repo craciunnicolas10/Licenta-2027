@@ -69,6 +69,23 @@ each third, possession summary, the list of passes and the full trajectory.
 playertrack landmarks   # list the landmark names usable in calibration files
 ```
 
+### HTTP API
+
+```bash
+pip install -e "backend[detect,api]"
+playertrack serve --port 8000        # interactive docs at http://127.0.0.1:8000/docs
+```
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/analyses` | multipart form: `video`, `calibration` (JSON string), `click_x`, `click_y`, optional `click_frame`. Returns `202` with the job. |
+| `GET` | `/api/analyses/{id}` | `status` (`queued` / `running` / `done` / `failed`), `frames_processed`, and `result` or `error` |
+| `GET` | `/api/health` | liveness check |
+
+Jobs run in the background one at a time and are kept in memory. Allowed
+browser origins are set with `PLAYERTRACK_CORS_ORIGINS` (default
+`http://localhost:5173`, the Vite dev server).
+
 ## Project layout
 
 ```
